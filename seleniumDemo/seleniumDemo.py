@@ -133,7 +133,7 @@ def get_random_header():
         "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11",
         "Mozilla/5.0 (X11; U; Linux x86_64; zh-CN; rv:1.9.2.10) Gecko/20100922 Ubuntu/10.10 (maverick) Firefox/3.6.10"
     ]
-    headers={'User-Agent':random.choice(USER_AGENTS),'Accept':"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",'Accept-Encoding':'gzip'}
+    headers={'User-Agent':random.choice(USER_AGENTS),'Accept':"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",'Accept-Encoding':'gzip','Access-Control-Allow-Origi':'*'}
     return headers
 
 def   scraw_proxies(page_num,scraw_url="http://www.xicidaili.com/nt/"):
@@ -185,44 +185,62 @@ def test_ip(ip,test_url='http://2017.ip138.com/ic.asp',time_out=3):
 
 
 
-avaiable_ip = scraw_proxies(3)
-print(avaiable_ip)
+# avaiable_ip = scraw_proxies(3)
+# print(avaiable_ip)
 
-[('120.92.21.238', '10000')];
+# [('120.92.21.238', '10000')];
 
-# def get_Content(url):
-#
-#
-#     proxies = get_random_ip(get_ip_list())
-#     r = requests.get(url,headers=headers,proxies=proxies)
-#     soup = BeautifulSoup(r.text,'lxml')
-#     try:
-#         # 1.查找游记的文字内容
-#         content = soup.find_all('div', attrs={'class': 'va_con _j_master_content'})[0].text;
-#         re.findall(r'\S', content)
-#         wordList = re.findall(r'\S+', content);
-#         pureContent = ''.join(wordList)
-#         print(pureContent)
-#         print(len(pureContent))
-#         #     2.保存到txt
-#         with open('./hengshan_youji.txt', 'a') as fp:
-#             fp.write(pureContent + '\r\n')
-#     except:
-#         print('保错的url:' +url)
-#
-#
-# # 2. 抓取所有的游记内容
-# def get_all_content():
-#
-#     urls = []
-#     with open('./urls.txt') as fp:
-#         lines = fp.readlines()
-#         for line in lines:
-#             full_url = 'http://www.mafengwo.cn' + line.strip()
-#             print(full_url)
-#             get_Content(full_url)
-#
-#             break
+def get_Content(url,line):
 
+    line = line+1
+    # proxies = get_random_ip(get_ip_list())
+    r = requests.get(url,headers=get_random_header(),)
+    soup = BeautifulSoup(r.text,'lxml')
+    try:
+        # 1.查找游记的文字内容
+        content = soup.find_all('div', attrs={'class': 'va_con _j_master_content'})[0].text;
+        re.findall(r'\S', content)
+        wordList = re.findall(r'\S+', content);
+        pureContent = ''.join(wordList)
+        print(pureContent)
+        print(len(pureContent))
+        with open('./success_url.txt','a') as fp:
+            fp.write(url + '\r\n')
+        #     2.保存到txt
+        with open('./hengshan_youji.txt', 'a') as fp:
+            fp.write( '%d:' % line + pureContent + '\r\n')
+    except Exception as err:
+        with open('./fail_url.txt','a') as fp:
+            fp.write(url+'\r\n')
+            print('保错的url:' +url)
+            print(err)
+
+
+# 2. 抓取所有的游记内容
+def get_all_content():
+
+    urls = []
+
+    success_urls = []
+
+    with open('./success_url.txt','r') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            full_url = line.strip()
+            success_urls.append(full_url)
+
+
+    with open('./urls.txt') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            full_url = 'http://www.mafengwo.cn' + line.strip()
+
+            print(full_url)
+            if full_url not in success_urls:
+
+                time.sleep(1)
+                get_Content(full_url, lines.index(line))
 
 # get_all_content()
+
+get_Content('http://www.mafengwo.cn/i/3282928.html',1200)
