@@ -198,22 +198,43 @@ def get_Content(url,line):
     soup = BeautifulSoup(r.text,'lxml')
     try:
         # 1.查找游记的文字内容
-        content = soup.find_all('div', attrs={'class': 'va_con _j_master_content'})[0].text;
-        re.findall(r'\S', content)
-        wordList = re.findall(r'\S+', content);
-        pureContent = ''.join(wordList)
-        print(pureContent)
-        print(len(pureContent))
+        # content = soup.find_all('div', attrs={'class': 'va_con _j_master_content'})[0].text;
+        content = soup.find_all('body')[0].text;
+        # print(get_pureText(content))
+        headContent = soup.find_all('div',attrs={'id':'header'})[0].text
+
+        print('=========head=====')
+        # print(get_pureText(headContent))
+
+        footContent = soup.find_all('div',attrs={'id':'footer'})[0].text
+
+        # 文章内容
+        article_wordList = [w for w in get_pureText(content) if w not in get_pureText(headContent) and w not in get_pureText(footContent)]
+        article_content = ''.join(article_wordList)
+        print('------------------------------')
+        # print(article_content)
         with open('./success_url.txt','a') as fp:
             fp.write(url + '\r\n')
         #     2.保存到txt
         with open('./hengshan_youji.txt', 'a') as fp:
-            fp.write( '%d:' % line + pureContent + '\r\n')
+            fp.write( '%d:' % line + article_content + '\r\n')
     except Exception as err:
         with open('./fail_url.txt','a') as fp:
             fp.write(url+'\r\n')
             print('保错的url:' +url)
             print(err)
+
+# 获取文字中的中文和数字，去除换行和空格
+def get_pureText(content):
+    wordList = re.findall(r'[\u4e00-\u9fa50-9]+',content)
+    pureContent = ''.join(wordList)
+    return pureContent
+
+def get_NoNewLineWord(content):
+    wordList =re.findall(r'\S+', content)
+    return ''.join(wordList)
+
+
 
 
 # 2. 抓取所有的游记内容
@@ -222,6 +243,7 @@ def get_all_content():
     urls = []
 
     success_urls = []
+
 
     with open('./success_url.txt','r') as fp:
         lines = fp.readlines()
@@ -234,13 +256,20 @@ def get_all_content():
         lines = fp.readlines()
         for line in lines:
             full_url = 'http://www.mafengwo.cn' + line.strip()
-
+            urls.append(full_url)
             print(full_url)
             if full_url not in success_urls:
 
                 time.sleep(1)
                 get_Content(full_url, lines.index(line))
 
-# get_all_content()
+get_all_content()
 
-get_Content('http://www.mafengwo.cn/i/3282928.html',1200)
+get_Content('http://www.mafengwo.cn/i/3265894.html',1200)
+
+# s = 'helloyj'
+# b = 'yj'
+# c = 'he'
+#
+# c = [r for r in s if r not in b and  r not in c]
+# print(''.join(c))
