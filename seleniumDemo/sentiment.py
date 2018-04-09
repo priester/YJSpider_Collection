@@ -33,7 +33,7 @@ print(len(stopDict))
 def seg_word(sentence):
     seg_list = jieba.cut(sentence)
     seg_result = [ w for w in seg_list if w not in stopDict]
-    print(seg_result)
+    # print(seg_result)
     return seg_result
 
 
@@ -72,26 +72,28 @@ analysisDict = [w for w in originDict if len(w)>0]
 print('analysisDict length ={}'.format(len(analysisDict)))
 
 
-# 创建workbook
-workBook = xlwt.Workbook()
-
-# 创建表
-workSheet = workBook.add_sheet('情感打分')
-
-workSheet.write(0,0,label='内容')
-workSheet.write(0,1,label='评分')
+# # 创建workbook
+# workBook = xlwt.Workbook()
+#
+# # 创建表
+# workSheet = workBook.add_sheet('情感打分')
+#
+# workSheet.write(0,0,label='内容')
+# workSheet.write(0,1,label='评分')
 
 neg_scores = []
 pos_scores = []
 for article in analysisDict:
-	workSheet.write(analysisDict.index(article)+1,0,label=article)
+	# workSheet.write(analysisDict.index(article)+1,0,label=article)
 	score = predict(article)
-	workSheet.write(analysisDict.index(article)+1,1,label=str(score))
+	# workSheet.write(analysisDict.index(article)+1,1,label=str(score))
 	if score>0:
-		pos_scores.append(score)
+		with open('./pos_article.txt','a') as fp:
+			fp.write(article + '\r\n')
 	else:
-		neg_scores.append(score)
+		with open('./neg_article.txt','a') as fp:
+			fp.write(article + '\r\n')
+# print(len(pos_scores))
+# print('=====正面评价占比:{}'.format(len(pos_scores)/len(analysisDict)))
 
-print('=====正面评价占比:{}'.format(len(pos_scores)/len(analysisDict)))
-
-workBook.save('./result.xls')
+# workBook.save('./result.xls')
