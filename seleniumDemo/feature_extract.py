@@ -70,21 +70,31 @@ def cut_words(articlePath,isSave=False,savePath=None):
             with open(savePath, 'a') as fp:
                 fp.write(word + '\r\n')
 
+def cut_cluster0_words(clusterPath,savePath):
+    text = open(clusterPath,'r').read()
+    for w in text.split(' '):
+        with open(savePath,'a')  as fp:
+            fp.write(w + '\r\n')
+
+
+
+
+
 
 
 
 
 #2.使用sklearn计算TF-IDF
 from sklearn.feature_extraction.text import  TfidfTransformer
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
 
-def caculate_tfidf(path,resultPath=None):
+def caculate_tfidf(corpus):
     #1.加载语聊
-    corpus = readDictList(path)
+    print('corpus length:{}'.format(len(corpus)))
     #2.将文本中词语转换为词频矩阵，矩阵元素a[i][j] 表示j词在i类文本下的词频矩阵
-    vectorizer = CountVectorizer()
+    vectorizer = CountVectorizer(max_df=0.5,max_features=1000)
     X = vectorizer.fit_transform(corpus)
-    # print(X[0])
+    print(X)
 
     #3.计算tf-idf值
     transformer = TfidfTransformer()
@@ -102,19 +112,8 @@ def caculate_tfidf(path,resultPath=None):
     #     if Weight[0][w]>0:
     #         print(words[w])
 
-    return Weight,corpus
+    return Weight
 
-    #6、把结果保存
-    # if resultPath:
-    #     result = open(resultPath,'w')
-    #     for word in words:
-    #         result.write(word + ' ')
-    #     result.write('========================' + '\r\n')
-    #     for w in Weight:
-    #         for s in w:
-    #             print(s)
-    #             result.write(str(s))
-    #     result.close()
 
 from sklearn.cluster import KMeans,MiniBatchKMeans
 
@@ -122,24 +121,19 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 # 3、聚类
-def cluster(W,corpus,n_clusters=2):
+def cluster(W,corpus,n_clusters=2,resultPath=None):
 
+    # if n_clusters == 2:
+    #     return
 
     # clf = KMeans(n_clusters=n_clusters)
-    clf = MiniBatchKMeans(n_clusters=n_clusters,batch_size=100,init_size=1000)
+    clf = MiniBatchKMeans(n_clusters=n_clusters,batch_size=1000,init_size=1000)
     s = clf.fit(W)
 
-    # print(s)
-    # #20个中心点
-    # print(clf.cluster_centers_)
-
-
-    # #每个样本所属的簇
-    # print(clf.labels_)
 
     dic = {}
     for i in range(len(clf.labels_)):
-        key = clf.labels_[i]
+        key = str(clf.labels_[i])
         if dic.get(key):
             arr = list(dic[key])
             arr.append(corpus[i])
@@ -149,50 +143,90 @@ def cluster(W,corpus,n_clusters=2):
             arr.append(corpus[i])
             dic[key] = arr
 
-    for (key ,value) in dic.items():
-        with open('./pos_cluster_result.txt','a') as fp:
-            fp.write('cluser{}'.format(key) + '\r\n')
-            fp.write(' '.join(value) + '\r\n')
+
+
+    # print(dic)
+
+
+    if resultPath:
+        results = []
+        for (key, value) in dic.items():
+            results.append(value)
+        results =  sorted(results, key=lambda x: len(x), reverse=True)
+        print(results)
+        write_result = []
+        if n_clusters == 3:
+            print('====聚完这次就要结束了========')
+            write_results = results
+        else:
+            write_results = results
+        for i in range(0,len(write_results)):
+            result = write_results[i]
+            with open(resultPath, 'a') as fp:
+                fp.write(' '.join(result) + '\r\n')
+
+                # if n_clusters == 3 and (i == len(write_results) - 1):
+                #     return
+
+
+
+
 
     #用来评估簇的个数是否合适，距离越小说明簇分的越好，选取临界点的簇个数
-    print('聚类完成============总的距离{}====kz值为{}'.format(clf.inertia_,n_clusters
-
-                                                    ))
+    print('聚类完成============总的距离{}====kz值为{}'.format(clf.inertia_,n_clusters))
 
     # 肘部法则：
     #     如果问题中没有指定 的值，可以通过肘部法则这一技术来估计聚类数量。肘部法则会把不同 值的
     #     成本函数值画出来。随着 值的增大，平均畸变程度会减小；每个类包含的样本数会减少，于是样本
     #     离其重心会更近。但是，随着 值继续增大，平均畸变程度的改善效果会不断减低。 值增大过程
+
     #     中，畸变程度的改善效果下降幅度最大的位置对应的 值就是肘部
     # 平均畸变程度
     avage_change_value = sum(np.min(cdist(W, clf.cluster_centers_, 'euclidean'), axis=1)) / W.shape[0]
-
+    # 递归算法
+    # corpus = dic.get('0')
+    # n_len = int(len(corpus)/5)
+    # W = caculate_tfidf(corpus)
+    # cluster(W, corpus, n_clusters=n_len,resultPath=resultPath)
     return avage_change_value
+
+
+def test_cluster(W,corpus,clusterRange=range(2,11)):
+
+    scores = []
+
+    for i in clusterRange:
+        scores.append(cluster(W, corpus, i))
+    import matplotlib.pyplot as plt
+    plt.plot(clusterRange,scores,'bx-')
+    plt.title('用肘部法则来确定最佳的K值')
+    plt.xlabel('K')
+    plt.ylabel('平均畸变程度')
+
+    plt.legend()
+    plt.show()
 
 
 
 if __name__ == '__main__':
     # 1.对证明评价进行切词
     # cut_words('./pos_article.txt',isSave=True,savePath='./pos_full_words.txt')
+    # cut_cluster0_words('./pos_cluster0.txt','./pos_cluster0_words.txt')
 
-    # # 2.计算文档的tf-idf
-    W,corpus = caculate_tfidf('./pos_full_words.txt',resultPath='./pos_result.txt')
-    # #
-    # # # 3、聚类
-    cluster(W,corpus,n_clusters=918)
-    # i = 900
-    # scores = []
-    # while(i<=950):
-    #     scores.append(cluster(W,corpus,i))
-    #     i+=1
-    # import matplotlib.pyplot as plt
-    # plt.plot(range(900,951),scores,'bx-')
-    # plt.title('用肘部法则来确定最佳的K值')
-    # plt.xlabel('K')
-    # plt.ylabel('平均畸变程度')
+    corpus = readDictList('./pos_full_words.txt')[:100]
+    # corpus = [
     #
-    # plt.legend()
-    # plt.show()
-    # print(min(scores))
-    # print(scores.index(min(scores)))
+    #     '天门', '美女', '垃圾', '什么', '美男',
+    #     '美妹', '北京'
+    #
+    # ]
+    # print(corpus)
+
+    # # # 2.计算文档的tf-idf
+    W = caculate_tfidf(corpus)
+    # # #
+    # # # # 3、聚类
+    cluster(W,corpus,n_clusters=20,resultPath='./pos_cluster_test_result.txt')
+    # test_cluster(W,corpus,clusterRange=range(2,30))
+
 
