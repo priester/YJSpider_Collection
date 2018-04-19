@@ -226,7 +226,7 @@ if __name__ == '__main__':
     W = caculate_tfidf(corpus)
     # # #
     # # # # 3、聚类
-    cluster(W,corpus,n_clusters=20,resultPath='./pos_cluster_test_result.txt')
+    # cluster(W,corpus,n_clusters=20,resultPath='./pos_cluster_test_result.txt')
     # test_cluster(W,corpus,clusterRange=range(2,30))
 
 
