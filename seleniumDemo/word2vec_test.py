@@ -1,7 +1,8 @@
 # 参考文章
 # https://blog.csdn.net/eastmount/article/details/50637476
 # https://blog.csdn.net/zhuzuwei/article/details/79004650
-
+# https://blog.csdn.net/zl_best/article/details/53433072
+# https://blog.csdn.net/lk7688535/article/details/52798735
 from  gensim.models.word2vec import Word2Vec
 from  gensim.models import word2vec
 import  jieba
